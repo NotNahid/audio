@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Audio: 4 Raws</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212; /* Dark background */
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* CRITICAL: Hiding the video player by moving it off-screen.
+           We do NOT use display:none because YouTube stops playback
+           if the element isn't rendered.
+        */
+        #video-background {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* The Fallback Button */
+        #play-button {
+            display: none; /* Hidden by default, shown via JS if autoplay fails */
+            margin-top: 30px;
+            padding: 12px 30px;
+            background-color: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        #play-button:hover {
+            transform: scale(1.05);
+            background-color: #f0f0f0;
+        }
+
+        #play-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Simple animation for the text */
+        .fade-in {
+            animation: fadeIn 2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fade-in">
+        <h1>4 RAWS</h1>
+        <p>Background Audio loaded via YouTube</p>
+    </div>
+    
+    <!-- This button only appears if the browser blocks autoplay -->
+    <button id="play-button" onclick="enableAudio()">
+        ▶ Play Audio
+    </button>
+
+    <!-- The container for the YouTube Video -->
+    <div id="video-background"></div>
+
+    <script>
+        // 1. Load the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 2. This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('video-background', {
+                height: '300',
+                width: '400',
+                videoId: 'gt_Oe2yGE4o', // Your specific Video ID
+                playerVars: {
+                    'autoplay': 1,       // Auto-play the video on load
+                    'controls': 0,       // Show no player controls
+                    'loop': 1,           // Loop the video
+                    'playlist': 'gt_Oe2yGE4o', // Required for looping single video
+                    'modestbranding': 1, // Hide YouTube logo
+                    'disablekb': 1,      // Disable keyboard controls
+                    'fs': 0              // Disable fullscreen
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        // 3. The API will call this function when the video player is ready.
+        function onPlayerReady(event) {
+            // Set volume to 100% (Optional: adjust as needed)
+            event.target.setVolume(100); 
+            
+            // Attempt to play video
+            var playPromise = event.target.playVideo();
+
+            // 4. Handle Autoplay Blockers Safely
+            // Check if playPromise exists AND has a .then function (is a Promise)
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise.then(_ => {
+                    // Autoplay started successfully!
+                    console.log("Audio started automatically.");
+                })
+                .catch(error => {
+                    // Autoplay was prevented by the browser.
+                    console.log("Autoplay blocked. Showing button.");
+                    document.getElementById('play-button').style.display = 'inline-block';
+                });
+            } else {
+                // Fallback: If the API doesn't return a promise in this environment,
+                // we assume it tried to play. We verify state after a short delay.
+                // State 1 = Playing, 3 = Buffering. If neither, show button.
+                setTimeout(function() {
+                    var state = event.target.getPlayerState();
+                    if (state !== 1 && state !== 3) {
+                         document.getElementById('play-button').style.display = 'inline-block';
+                    }
+                }, 1000);
+            }
+        }
+
+        // 5. Function to trigger play manually if blocked
+        function enableAudio() {
+            player.playVideo();
+            document.getElementById('play-button').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
