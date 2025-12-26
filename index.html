@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>4 RAWS | Audio Experience</title>
+    <title>Audio Experience</title>
     <style>
         body {
             margin: 0;
@@ -30,68 +30,102 @@
         /* Glassmorphism Card */
         .player-card {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px 40px;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.18);
             text-align: center;
-            max-width: 350px;
+            max-width: 400px;
             width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
             font-weight: 700;
             margin: 0;
-            font-size: 2rem;
+            font-size: 1.8rem;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         p {
             color: rgba(255, 255, 255, 0.8);
             margin-top: 5px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
-        /* Visualizer Container */
-        .visualizer {
+        /* Canvas Visualizer */
+        canvas {
+            margin: 20px 0;
+            width: 100%;
+            height: 80px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Input Group */
+        .input-group {
+            width: 100%;
             display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            height: 60px;
-            margin: 30px 0;
-            gap: 5px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        /* Individual Bars */
-        .bar {
-            width: 8px;
+        input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            color: white;
+            outline: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        input:focus {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .btn-load {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-play {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            padding: 15px 40px;
             background: white;
-            border-radius: 5px;
-            animation: bounce 1s infinite ease-in-out;
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            color: #e73c7e;
+            border-radius: 50px;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        /* Randomize animations for each bar to look natural */
-        .bar:nth-child(1) { height: 20px; animation-duration: 0.9s; }
-        .bar:nth-child(2) { height: 40px; animation-duration: 1.1s; }
-        .bar:nth-child(3) { height: 50px; animation-duration: 0.8s; }
-        .bar:nth-child(4) { height: 30px; animation-duration: 1.2s; }
-        .bar:nth-child(5) { height: 40px; animation-duration: 0.7s; }
-        .bar:nth-child(6) { height: 20px; animation-duration: 1.0s; }
-
-        .visualizer.paused .bar {
-            animation-play-state: paused;
-            height: 5px !important;
-            transition: height 0.3s ease;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: scaleY(1); opacity: 0.8; }
-            50% { transform: scaleY(1.5); opacity: 1; }
+        .btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
         }
 
         /* Hiding the video player */
@@ -103,55 +137,33 @@
             pointer-events: none;
         }
 
-        /* Play Button */
-        #play-button {
-            display: none;
-            margin-top: 10px;
-            padding: 15px 40px;
-            background: white;
-            color: #e73c7e;
-            border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        #play-button:hover {
-            transform: scale(1.05);
-            background: #fff;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
         /* Status Indicator */
         .status {
-            font-size: 0.8rem;
-            margin-top: 20px;
+            font-size: 0.75rem;
+            margin-top: 15px;
             opacity: 0.7;
+            min-height: 1.2em;
         }
     </style>
 </head>
 <body>
 
     <div class="player-card">
-        <h1>4 RAWS</h1>
+        <!-- Search/Input Section -->
+        <div class="input-group">
+            <input type="text" id="youtube-url" placeholder="Paste YouTube Link here...">
+            <button class="btn btn-load" onclick="loadVideoFromInput()">Load</button>
+        </div>
+
+        <h1 id="track-title">4 RAWS</h1>
         <p>Now Playing</p>
 
-        <!-- Fake Visualizer -->
-        <div class="visualizer" id="visualizer">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
+        <!-- High Fidelity Canvas Visualizer -->
+        <canvas id="audio-visualizer"></canvas>
         
-        <div class="status" id="status-text">Initializing Audio...</div>
+        <div class="status" id="status-text">Initializing Audio Engine...</div>
 
-        <button id="play-button" onclick="enableAudio()">
+        <button id="play-button" class="btn btn-play" onclick="enableAudio()">
             ▶ PLAY MUSIC
         </button>
     </div>
@@ -160,23 +172,110 @@
     <div id="video-background"></div>
 
     <script>
+        // --- VISUALIZER ENGINE ---
+        const canvas = document.getElementById('audio-visualizer');
+        const ctx = canvas.getContext('2d');
+        let isAnimating = false;
+        let animationId;
+        
+        // Resize canvas to match display size for sharp rendering
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawVisualizer() {
+            if (!isAnimating) return;
+            
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            const bars = 64; // Number of bars
+            const barWidth = width / bars;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // Create a gradient
+            const gradient = ctx.createLinearGradient(0, height, 0, 0);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 1)');
+            ctx.fillStyle = gradient;
+
+            for (let i = 0; i < bars; i++) {
+                // SIMULATION: Generate "noise" that looks like music
+                // We use Sine waves based on time to create rhythmic pulses
+                const time = Date.now() / 200; 
+                const noise = Math.sin(i * 0.2 + time) * Math.cos(i * 0.1 - time) * 0.5 + 0.5;
+                
+                // Add some randomness for "high hat" twitching
+                const randomTwitch = Math.random() * 0.3;
+                
+                // Base height based on index (mids are higher generally)
+                const shape = Math.sin((i / bars) * Math.PI); 
+                
+                const barHeight = (noise * shape * height * 0.8) + (randomTwitch * height * 0.2) + 5;
+                
+                // Draw rounded bars
+                const x = i * barWidth;
+                const y = height - barHeight;
+                
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth - 2, barHeight, 5);
+                ctx.fill();
+            }
+            
+            animationId = requestAnimationFrame(drawVisualizer);
+        }
+
+        function startVisualizer() {
+            if (!isAnimating) {
+                isAnimating = true;
+                drawVisualizer();
+            }
+        }
+
+        function stopVisualizer() {
+            isAnimating = false;
+            cancelAnimationFrame(animationId);
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw a flat line to show "paused" state
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, height - 10);
+            ctx.lineTo(width, height - 10);
+            ctx.stroke();
+        }
+
+
+        // --- YOUTUBE LOGIC ---
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         var player;
+        var currentId = 'gt_Oe2yGE4o'; // Default Video ID
+
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('video-background', {
                 height: '300',
                 width: '400',
-                videoId: 'gt_Oe2yGE4o',
+                videoId: currentId,
                 playerVars: {
                     'autoplay': 1,
                     'controls': 0,
                     'loop': 1,
-                    'playlist': 'gt_Oe2yGE4o',
-                    'playsinline': 1, // Helps on mobile
+                    'playlist': currentId,
+                    'playsinline': 1,
                     'disablekb': 1,
                     'fs': 0
                 },
@@ -189,29 +288,28 @@
 
         function onPlayerReady(event) {
             event.target.setVolume(100);
-            var playPromise = event.target.playVideo();
+            attemptAutoplay(event.target);
+            updateTitle();
+        }
+
+        function attemptAutoplay(targetPlayer) {
+            var playPromise = targetPlayer.playVideo();
 
             if (playPromise && typeof playPromise.then === 'function') {
                 playPromise.then(_ => {
                     console.log("Audio started automatically.");
-                    updateUI(true);
+                    // UI updates happen in onStateChange
                 })
                 .catch(error => {
                     console.log("Autoplay blocked. Showing button.");
-                    updateUI(false);
-                    document.getElementById('play-button').style.display = 'inline-block';
-                    document.getElementById('status-text').innerText = "Tap Play to Start";
+                    showPlayButton();
                 });
             } else {
                 // Fallback for older browsers
                 setTimeout(function() {
-                    var state = event.target.getPlayerState();
-                    if (state !== 1 && state !== 3) {
-                         updateUI(false);
-                         document.getElementById('play-button').style.display = 'inline-block';
-                         document.getElementById('status-text').innerText = "Tap Play to Start";
-                    } else {
-                        updateUI(true);
+                    var state = targetPlayer.getPlayerState();
+                    if (state !== 1 && state !== 3) { // Not playing or buffering
+                         showPlayButton();
                     }
                 }, 1000);
             }
@@ -220,31 +318,78 @@
         function onPlayerStateChange(event) {
             // YT.PlayerState.PLAYING = 1
             if (event.data == 1) {
-                updateUI(true);
+                hidePlayButton();
+                startVisualizer();
+                document.getElementById('status-text').innerText = "Audio Playing";
             } else {
-                updateUI(false);
+                stopVisualizer();
+                if(event.data !== 3) { // If not buffering
+                     document.getElementById('status-text').innerText = "Paused / Waiting";
+                }
             }
+        }
+
+        function showPlayButton() {
+            document.getElementById('play-button').style.display = 'inline-block';
+            document.getElementById('status-text').innerText = "Tap Play to Start";
+            stopVisualizer();
+        }
+
+        function hidePlayButton() {
+            document.getElementById('play-button').style.display = 'none';
         }
 
         function enableAudio() {
             player.playVideo();
-            document.getElementById('play-button').style.display = 'none';
+            hidePlayButton();
         }
 
-        function updateUI(isPlaying) {
-            const visualizer = document.getElementById('visualizer');
-            const status = document.getElementById('status-text');
-            
-            if (isPlaying) {
-                visualizer.classList.remove('paused');
-                status.innerText = "Audio Playing";
-            } else {
-                visualizer.classList.add('paused');
+        function updateTitle() {
+            // Try to fetch title if available (often restricted by privacy settings, but we try)
+            if(player && player.getVideoData) {
+                const data = player.getVideoData();
+                if(data && data.title) {
+                    document.getElementById('track-title').innerText = data.title;
+                }
             }
         }
+
+        // --- DYNAMIC LOADING LOGIC ---
+        function loadVideoFromInput() {
+            const url = document.getElementById('youtube-url').value;
+            const videoId = extractVideoID(url);
+            
+            if (videoId) {
+                currentId = videoId;
+                document.getElementById('status-text').innerText = "Loading Track...";
+                stopVisualizer();
+                
+                // Load the new video
+                player.loadVideoById({
+                    videoId: videoId,
+                    // Note: 'playlist' param in loadVideoById doesn't set the loop playlist, 
+                    // looping a dynamic video is tricker, so we rely on single play or manual replay for now
+                    // unless we destroy and recreate the player, which is heavy.
+                });
+                
+                // Reset text to generic until it loads
+                document.getElementById('track-title').innerText = "Loading...";
+                
+                // Wait a moment for metadata to load then update title
+                setTimeout(updateTitle, 2000);
+            } else {
+                alert("Invalid YouTube URL");
+            }
+        }
+
+        function extractVideoID(url) {
+            var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            var match = url.match(regExp);
+            return (match && match[7].length == 11) ? match[7] : false;
+        }
         
-        // Initialize as paused visually
-        document.getElementById('visualizer').classList.add('paused');
+        // Initial Draw
+        stopVisualizer();
     </script>
 </body>
 </html>
