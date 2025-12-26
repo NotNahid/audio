@@ -3,168 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Background Audio: 4 Raws</title>
+    <title>4 RAWS | Audio Experience</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #121212; /* Dark background */
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Card */
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             text-align: center;
+            max-width: 350px;
+            width: 90%;
         }
 
         h1 {
-            font-weight: 300;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin: 0;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         p {
-            color: #888;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
             font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        /* CRITICAL: Hiding the video player by moving it off-screen.
-           We do NOT use display:none because YouTube stops playback
-           if the element isn't rendered.
-        */
+        /* Visualizer Container */
+        .visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 60px;
+            margin: 30px 0;
+            gap: 5px;
+        }
+
+        /* Individual Bars */
+        .bar {
+            width: 8px;
+            background: white;
+            border-radius: 5px;
+            animation: bounce 1s infinite ease-in-out;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Randomize animations for each bar to look natural */
+        .bar:nth-child(1) { height: 20px; animation-duration: 0.9s; }
+        .bar:nth-child(2) { height: 40px; animation-duration: 1.1s; }
+        .bar:nth-child(3) { height: 50px; animation-duration: 0.8s; }
+        .bar:nth-child(4) { height: 30px; animation-duration: 1.2s; }
+        .bar:nth-child(5) { height: 40px; animation-duration: 0.7s; }
+        .bar:nth-child(6) { height: 20px; animation-duration: 1.0s; }
+
+        .visualizer.paused .bar {
+            animation-play-state: paused;
+            height: 5px !important;
+            transition: height 0.3s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(1); opacity: 0.8; }
+            50% { transform: scaleY(1.5); opacity: 1; }
+        }
+
+        /* Hiding the video player */
         #video-background {
             position: absolute;
             top: -9999px;
             left: -9999px;
-            width: 1px;
-            height: 1px;
             opacity: 0;
             pointer-events: none;
         }
 
-        /* The Fallback Button */
+        /* Play Button */
         #play-button {
-            display: none; /* Hidden by default, shown via JS if autoplay fails */
-            margin-top: 30px;
-            padding: 12px 30px;
-            background-color: #ffffff;
-            color: #000000;
+            display: none;
+            margin-top: 10px;
+            padding: 15px 40px;
+            background: white;
+            color: #e73c7e;
             border: none;
             border-radius: 50px;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: transform 0.2s, background-color 0.2s;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
         }
 
         #play-button:hover {
             transform: scale(1.05);
-            background-color: #f0f0f0;
+            background: #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
 
-        #play-button:active {
-            transform: scale(0.95);
-        }
-
-        /* Simple animation for the text */
-        .fade-in {
-            animation: fadeIn 2s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Status Indicator */
+        .status {
+            font-size: 0.8rem;
+            margin-top: 20px;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
 
-    <div class="fade-in">
+    <div class="player-card">
         <h1>4 RAWS</h1>
-        <p>Background Audio loaded via YouTube</p>
+        <p>Now Playing</p>
+
+        <!-- Fake Visualizer -->
+        <div class="visualizer" id="visualizer">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        
+        <div class="status" id="status-text">Initializing Audio...</div>
+
+        <button id="play-button" onclick="enableAudio()">
+            ▶ PLAY MUSIC
+        </button>
     </div>
-    
-    <!-- This button only appears if the browser blocks autoplay -->
-    <button id="play-button" onclick="enableAudio()">
-        ▶ Play Audio
-    </button>
 
     <!-- The container for the YouTube Video -->
     <div id="video-background"></div>
 
     <script>
-        // 1. Load the IFrame Player API code asynchronously.
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // 2. This function creates an <iframe> (and YouTube player)
-        //    after the API code downloads.
         var player;
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('video-background', {
                 height: '300',
                 width: '400',
-                videoId: 'gt_Oe2yGE4o', // Your specific Video ID
+                videoId: 'gt_Oe2yGE4o',
                 playerVars: {
-                    'autoplay': 1,       // Auto-play the video on load
-                    'controls': 0,       // Show no player controls
-                    'loop': 1,           // Loop the video
-                    'playlist': 'gt_Oe2yGE4o', // Required for looping single video
-                    'modestbranding': 1, // Hide YouTube logo
-                    'disablekb': 1,      // Disable keyboard controls
-                    'fs': 0              // Disable fullscreen
+                    'autoplay': 1,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'gt_Oe2yGE4o',
+                    'playsinline': 1, // Helps on mobile
+                    'disablekb': 1,
+                    'fs': 0
                 },
                 events: {
-                    'onReady': onPlayerReady
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
                 }
             });
         }
 
-        // 3. The API will call this function when the video player is ready.
         function onPlayerReady(event) {
-            // Set volume to 100% (Optional: adjust as needed)
-            event.target.setVolume(100); 
-            
-            // Attempt to play video
+            event.target.setVolume(100);
             var playPromise = event.target.playVideo();
 
-            // 4. Handle Autoplay Blockers Safely
-            // Check if playPromise exists AND has a .then function (is a Promise)
             if (playPromise && typeof playPromise.then === 'function') {
                 playPromise.then(_ => {
-                    // Autoplay started successfully!
                     console.log("Audio started automatically.");
+                    updateUI(true);
                 })
                 .catch(error => {
-                    // Autoplay was prevented by the browser.
                     console.log("Autoplay blocked. Showing button.");
+                    updateUI(false);
                     document.getElementById('play-button').style.display = 'inline-block';
+                    document.getElementById('status-text').innerText = "Tap Play to Start";
                 });
             } else {
-                // Fallback: If the API doesn't return a promise in this environment,
-                // we assume it tried to play. We verify state after a short delay.
-                // State 1 = Playing, 3 = Buffering. If neither, show button.
+                // Fallback for older browsers
                 setTimeout(function() {
                     var state = event.target.getPlayerState();
                     if (state !== 1 && state !== 3) {
+                         updateUI(false);
                          document.getElementById('play-button').style.display = 'inline-block';
+                         document.getElementById('status-text').innerText = "Tap Play to Start";
+                    } else {
+                        updateUI(true);
                     }
                 }, 1000);
             }
         }
 
-        // 5. Function to trigger play manually if blocked
+        function onPlayerStateChange(event) {
+            // YT.PlayerState.PLAYING = 1
+            if (event.data == 1) {
+                updateUI(true);
+            } else {
+                updateUI(false);
+            }
+        }
+
         function enableAudio() {
             player.playVideo();
             document.getElementById('play-button').style.display = 'none';
         }
+
+        function updateUI(isPlaying) {
+            const visualizer = document.getElementById('visualizer');
+            const status = document.getElementById('status-text');
+            
+            if (isPlaying) {
+                visualizer.classList.remove('paused');
+                status.innerText = "Audio Playing";
+            } else {
+                visualizer.classList.add('paused');
+            }
+        }
+        
+        // Initialize as paused visually
+        document.getElementById('visualizer').classList.add('paused');
     </script>
 </body>
 </html>
